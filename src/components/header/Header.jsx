@@ -9,26 +9,25 @@ import {
   } from "@fortawesome/free-solid-svg-icons";
 import "./header.css"
 import { DateRange } from "react-date-range";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import "react-date-range/dist/styles.css"; // main css file
 import "react-date-range/dist/theme/default.css";
 import { format } from 'date-fns';
 import { useNavigate } from "react-router-dom";
+import { SearchContext } from '../../context/SearchContex';
+import { AuthContext } from '../../context/AuthContext';
 
 const Header = ({ type }) => {
 
     const [destination,setDestination] = useState("");
-    //เก็บค่า boolean เปิด/ปิด Calendar
     const [openDate,setOpenDate] = useState(false);
-    const [date, setDate] = useState([
+    const [dates, setDates] = useState([
         {
           startDate: new Date(),
           endDate: new Date(),
           key: "selection",
         },
       ]);
-    
-    //เก็บค่า boolean เปิด/ปิด options adult/children/room
     const [openOptions,setOpenOptions] = useState(false);
     const [options,setOptions] = useState({
         adult: 1,
@@ -37,8 +36,8 @@ const Header = ({ type }) => {
     });
 
     const navigate = useNavigate();
+    const { user } = useContext(AuthContext);
 
-    //ฟังก์ชันเพิ่ม/ลด options
     const handleOption = (name, operation) =>{
         setOptions((prev)=>{
             return {
@@ -48,8 +47,11 @@ const Header = ({ type }) => {
         });
     };
 
+    const { dispatch } = useContext(SearchContext);
+
     const handleSearch = () => {
-        navigate("/hotels", {state: { destination, date, options }});
+        dispatch({type:"NEW_SEARCH", payload:{destination, dates, options}})
+        navigate("/hotels", {state: { destination, dates, options }});
     };
     
   return (
@@ -80,7 +82,6 @@ const Header = ({ type }) => {
                     <span>Airport taxis</span>
                 </div>
             </div>
-            {/* แสดงเมื่อ type ไม่เท่ากับ list */}
             { type !== "list" && (
                 <>
                     <h1 className="headerTitle">Lorem ipsum dolor sit amet consectetur.</h1>
@@ -88,7 +89,7 @@ const Header = ({ type }) => {
                         Lorem, ipsum dolor sit amet consectetur adipisicing elit. Minus animi 
                         ad inventore obcaecati, at error nam deserunt dolorem eligendi consequatur.
                     </p>
-                    <button className="headerBtn">Sign in / Register</button>
+                    {!user && <button className="headerBtn">Sign in / Register</button>}
                     <div className="headerSearch">
                         <div className="headerSearchItem">
                             <FontAwesomeIcon icon={faBed} className="headerIcon"/>
@@ -103,16 +104,16 @@ const Header = ({ type }) => {
                             <FontAwesomeIcon icon={faCalendarDays} className="headerIcon"/>
                             <span onClick={()=>setOpenDate(!openDate)} 
                                 className="headerSearchText"
-                            >{`${format(date[0].startDate, "MM/dd/yyyy")} to ${format(
-                                date[0].endDate,
+                            >{`${format(dates[0].startDate, "MM/dd/yyyy")} to ${format(
+                                dates[0].endDate,
                                 "MM/dd/yyyy"
                             )}`}</span>
                             {openDate &&
                                 <DateRange
                                 editableDateInputs={true}
-                                onChange={(item) => setDate([item.selection])}
+                                onChange={(item) => setDates([item.selection])}
                                 moveRangeOnFirstSelection={false}
-                                ranges={date}
+                                ranges={dates}
                                 className="date"
                                 minDate={new Date()}
                             />}
